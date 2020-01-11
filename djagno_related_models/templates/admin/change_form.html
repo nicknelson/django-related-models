@@ -1,0 +1,18 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_urls admin_modify %}
+{% load static %}
+
+{% block coltype %}{% if related_fields %}colMS{% endif %}{% endblock %}
+
+{% block sidebar %}
+  {% if related_fields %}
+    <div id="content-related">
+      <div class="module">
+        <h2>Related Objects</h2>
+        <div style="padding:0 15px">
+          {{ related_fields }}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+{% endblock %}
