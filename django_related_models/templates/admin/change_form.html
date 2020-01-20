@@ -10,7 +10,14 @@
       <div class="module">
         <h2>Related Objects</h2>
         <div style="padding:0 15px">
-          {{ related_fields }}
+          {% for rf in related_fields $}
+            <strong>{{ rf.header }}</strong>
+            <ul style="margin-left:1rem;">
+              {% for f in rf.fields %}
+                <li><a href="{{ f.url }}">{{ f.name }}</a></li>
+              {% endfor %}
+            </ul>
+          {% endfor %}
         </div>
       </div>
     </div>

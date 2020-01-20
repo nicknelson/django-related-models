@@ -3,7 +3,6 @@ from django.core.exceptions import FieldError
 from django.db.models import ForeignKey, ManyToManyField, ManyToManyRel
 from django.forms.models import model_to_dict
 from django.urls import reverse
-from django.utils.safestring import mark_safe
 
 
 class ModelAdmin(admin.ModelAdmin):
@@ -27,10 +26,16 @@ class ModelAdmin(admin.ModelAdmin):
             f'{self.model._meta.model_name}': object_id
         }
         related_objects = related_model.objects.filter(**query_fields)
-        model_name = related_model._meta.model_name[0].upper() + related_model._meta.model_name[1:]
-        related_fields = f'<strong>{model_name}</strong><ul>'
+        model_name = related_model._meta.model_name[0].title()
+        related_fields = {
+            'header': model_name,
+            'fields': list()
+        }
         if related_objects.count() > 10:
-            related_fields += f'<li><a href="{reverse(f"admin:{related_model._meta.app_label}_{related_model._meta.model_name}_changelist")}?{self.model._meta.model_name}_id={object_id}">See all {related_objects.count()} {model_name}s</a></li>'
+            related_fields['fields'].append({
+                'url': f'{reverse(f"admin:{related_model._meta.app_label}_{related_model._meta.model_name}_changelist")}?{self.model._meta.model_name}_id={object_id}',
+                'name': f'See all {related_objects.count()} {model_name}s'
+            })
         else:
             for o in related_objects:
                 if o._meta.model_name == 'occurrence':
@@ -44,12 +49,14 @@ class ModelAdmin(admin.ModelAdmin):
                     label = f'{", ".join(schedule_dates)}, {o.start_time}'
                 else:
                     label = str(o)
-                related_fields += f'<li><a href="{reverse(f"admin:{related_model._meta.app_label}_{related_model._meta.model_name}_change", args=(o.id,))}">{label}</a></li>'
-        related_fields += '</ul>'
+                related_fields['fields'].append({
+                    'url': f'{reverse(f"admin:{related_model._meta.app_label}_{related_model._meta.model_name}_change", args=(o.id,))}',
+                    'name': label
+                })
         return related_fields
 
     def related_fields(self, object_id):
-        related_fields = ''
+        related_fields = list()
         obj = self.model.objects.get(id=object_id)
         if not self.hide_related:
             fields = obj._meta.get_fields(include_parents=True)
@@ -75,13 +82,32 @@ class ModelAdmin(admin.ModelAdmin):
                     elif type(field) in [ManyToManyField]:
                         values = [x for x in this_obj[field.name]]
                     if len(values) > 0:
-                        related_fields += '<strong>' + field.name[0].upper() + field.name[1:] + '</strong><ul style="margin-left:1rem">'
+                        this_fields = list()
                         for v in values:
                             model_name = v._meta.app_label + '_' + v._meta.model_name
-                            related_fields += f'<li><a href="{reverse(f"admin:{model_name}_change", args=(v.id,))}">{str(v)}</a></li>'
-                        related_fields += '</ul>'
+                            this_fields.append({
+                                'url': reverse(f"admin:{model_name}_change", args=(v.id,)),
+                                'name': str(v)
+                            })
+                        related_fields.append({
+                            'header': field.verbose_name.title(),
+                            'fields': this_fields
+                        })
 
             for related_model in self.additional_related_models:
-                related_fields += self.get_foreign_key_relationship(related_model, object_id)
+                related_fields.append(self.get_foreign_key_relationship(related_model, object_id))
 
-            return mark_safe(related_fields)
+            return related_fields
+
+    # def related_field_sidebar(self, fields):
+    #     [
+    #         {
+    #             'header': field.name.title(),
+    #             'fields':[
+    #                 {
+    #                     'url': {reverse(f"admin:{model_name}_change", args=(v.id,)),
+    #                     'name': v
+    #                 }
+    #             ]
+    #         }
+    #     ]
