@@ -1,18 +1,15 @@
-from django.contrib import admin, messages
+from django.contrib import admin
 from django.core.exceptions import FieldError
-from django.db.models import ForeignKey, ManyToManyField, ManyToManyRel, Model
+from django.db.models import ForeignKey, ManyToManyField, ManyToManyRel
 from django.forms.models import model_to_dict
-from django.http import HttpResponseRedirect
 from django.urls import reverse
-from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from django.utils.translation import gettext as _
-from urllib.parse import quote, urlencode
 
 
 class ModelAdmin(admin.ModelAdmin):
     exclude_during_duplication = ()
     additional_related_models = []
+    hide_related = False
 
     def change_view(self, request, object_id, **kwargs):
         related_fields = self.related_fields(object_id)
@@ -24,77 +21,6 @@ class ModelAdmin(admin.ModelAdmin):
         else:
             kwargs['extra_context'] = context
         return super(ModelAdmin, self).change_view(request, object_id, **kwargs)
-
-    def fields_as_params(self, obj):
-        fields_to_ignore = {
-            'id',
-            'oid'
-        }
-        fields_to_ignore = fields_to_ignore.union(self.readonly_fields)
-        fields_to_ignore = fields_to_ignore.union(self.exclude_during_duplication)
-        fields = model_to_dict(obj)
-        for field, value in list(fields.items()):
-            if field in fields_to_ignore or not value:
-                del fields[field]
-            else:
-                if type(fields[field]) in [list]:
-                    for i, item in enumerate(fields[field]):
-                        if isinstance(item, Model):
-                            fields[field][i] = str(item.id)
-                    fields[field] = ",".join(fields[field])
-        return urlencode(fields, True)
-
-    def response_add(self, request, obj, post_url_continue=None):
-        if "_addandcopy" in request.POST:
-            opts = obj._meta
-            preserved_filters = self.get_preserved_filters(request)
-            obj_url = reverse(
-                'admin:%s_%s_change' % (opts.app_label, opts.model_name),
-                args=(obj.pk,),
-                current_app=self.admin_site.name,
-            )
-            if self.has_change_permission(request, obj):
-                obj_repr = format_html('<a href="{}">{}</a>', quote(obj_url), obj)
-            else:
-                obj_repr = str(obj)
-            msg_dict = {
-                'name': opts.verbose_name,
-                'obj': obj_repr,
-            }
-            msg = format_html(
-                _('The {name} "{obj}" was added successfully. You may add another {name} below.'),
-                **msg_dict
-            )
-            self.message_user(request, msg, messages.SUCCESS)
-            redirect_url = request.path
-            redirect_url += '?' + self.fields_as_params(obj)
-            redirect_url = admin.templatetags.admin_urls.add_preserved_filters({'preserved_filters': preserved_filters, 'opts': opts}, redirect_url)
-            return HttpResponseRedirect(redirect_url)
-
-        else:
-            return super(ModelAdmin, self).response_add(request, obj, post_url_continue)
-
-    def response_change(self, request, obj):
-        if "_addandcopy" in request.POST:
-            opts = self.model._meta
-            preserved_filters = self.get_preserved_filters(request)
-            msg_dict = {
-                'name': opts.verbose_name,
-                'obj': format_html('<a href="{}">{}</a>', quote(request.path), obj),
-            }
-            msg = format_html(
-                _('The {name} "{obj}" was changed successfully. You may add another {name} below.'),
-                **msg_dict
-            )
-            self.message_user(request, msg, messages.SUCCESS)
-            redirect_url = reverse('admin:%s_%s_add' %
-                                   (opts.app_label, opts.model_name),
-                                   current_app=self.admin_site.name)
-            redirect_url += '?' + self.fields_as_params(obj)
-            redirect_url = admin.templatetags.admin_urls.add_preserved_filters({'preserved_filters': preserved_filters, 'opts': opts}, redirect_url)
-            return HttpResponseRedirect(redirect_url)
-        else:
-            return super(ModelAdmin, self).response_change(request, obj)
 
     def get_foreign_key_relationship(self, related_model, object_id):
         query_fields = {
@@ -123,12 +49,9 @@ class ModelAdmin(admin.ModelAdmin):
         return related_fields
 
     def related_fields(self, object_id):
-        show_related_objects_in = [
-            # add related models here
-        ]
         related_fields = ''
         obj = self.model.objects.get(id=object_id)
-        if self.model in show_related_objects_in:
+        if not self.hide_related:
             fields = obj._meta.get_fields(include_parents=True)
             this_obj = model_to_dict(obj)
 
