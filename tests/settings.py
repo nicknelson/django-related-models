@@ -1,19 +1,18 @@
 SECRET_KEY = 'fake-key'
 INSTALLED_APPS = [
+    'django_related_models',
+    'tests',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'tests',
-    'django_related_models',
+    'django.contrib.staticfiles'
 ]
 MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
 ]
@@ -42,3 +41,4 @@ ROOT_URLCONF = 'tests.urls'
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
 )
+STATIC_URL = '/static/'

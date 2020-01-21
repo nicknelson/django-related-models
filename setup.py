@@ -7,7 +7,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='django-related-models',
-    version='0.1',
+    version='0.2',
     license="BSD",
     packages=['django_related_models'],
     description='A related model sidebar for Django Admin',

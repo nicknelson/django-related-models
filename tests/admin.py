@@ -13,6 +13,7 @@ class ModelBAdmin(ModelAdmin):
 
 class ModelCentralAdmin(ModelAdmin):
     model = ModelCentral
+    additional_related_models = [(ModelFK, 'foreign_key_c',)]
 
 
 class ModelFKAdmin(ModelAdmin):
