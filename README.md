@@ -9,11 +9,13 @@ Install django-related-models with pip:
     pip install django-related-models
 ```
 
-Include it in your `INSTALLED_APPS` in settings:
+Include it in your `INSTALLED_APPS` in settings before `django.contrib.admin`:
 ```
     INSTALLED_APPS = [
         ...
-        'django_cache_tags'
+        'django_related_models',
+        'django.contrib.admin',
+        ...
     ]
 ```
 

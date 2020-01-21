@@ -21,12 +21,13 @@ class ModelAdmin(admin.ModelAdmin):
             kwargs['extra_context'] = context
         return super(ModelAdmin, self).change_view(request, object_id, **kwargs)
 
-    def get_foreign_key_relationship(self, related_model, object_id):
+    def get_foreign_key_relationship(self, related_model, object_id, field=None):
+        field_name = field if field else self.model._meta.model_name
         query_fields = {
-            f'{self.model._meta.model_name}': object_id
+            f'{field_name}': object_id
         }
         related_objects = related_model.objects.filter(**query_fields)
-        model_name = related_model._meta.model_name[0].title()
+        model_name = related_model._meta.verbose_name.title()
         related_fields = {
             'header': model_name,
             'fields': list()
@@ -90,24 +91,12 @@ class ModelAdmin(admin.ModelAdmin):
                                 'name': str(v)
                             })
                         related_fields.append({
-                            'header': field.verbose_name.title(),
+                            'header': field.verbose_name.title() if hasattr(field, 'verbose_name') else field.name.title(),
                             'fields': this_fields
                         })
 
             for related_model in self.additional_related_models:
-                related_fields.append(self.get_foreign_key_relationship(related_model, object_id))
+                m, f = related_model
+                related_fields.append(self.get_foreign_key_relationship(m, object_id, field=f))
 
             return related_fields
-
-    # def related_field_sidebar(self, fields):
-    #     [
-    #         {
-    #             'header': field.name.title(),
-    #             'fields':[
-    #                 {
-    #                     'url': {reverse(f"admin:{model_name}_change", args=(v.id,)),
-    #                     'name': v
-    #                 }
-    #             ]
-    #         }
-    #     ]
