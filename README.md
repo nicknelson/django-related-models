@@ -2,12 +2,7 @@
 
 django-related-models adds a Related Models sidebar to admin pages for easy navigation to related join fields. It supports both ForeignKey fields and ManyToMany relationships linking both ways.
 
-# Installation
-
-Install django-related-models with pip:
-```
-    pip install django-related-models
-```
+# Usage
 
 Include it in your `INSTALLED_APPS` in settings before `django.contrib.admin`:
 ```
